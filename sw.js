@@ -1,8 +1,8 @@
 const CACHE_NAME = 'biblioteca-v1';
 const assets = [
-  '/',
-  '/index.html',
-  // Añade aquí tus archivos CSS o JS locales si los tienes
+  './',
+  'index.html',
+  'manifest.json' // Es buena idea cachear también el manifest
 ];
 
 self.addEventListener('install', event => {
