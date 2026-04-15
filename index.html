@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Registro Biblioteca Pública de Ibros</title>
+
+  <style>
+    body {
+      font-family: Arial;
+      background: #ffffff;
+      color: #111;
+      text-align: center;
+      margin: 0;
+      padding: 20px;
+    }
+
+    h1 {
+      margin-bottom: 20px;
+    }
+
+    .busqueda {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    input {
+      padding: 12px;
+      width: 250px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
+
+    button {
+      padding: 12px 16px;
+      border: none;
+      background: #3b82f6;
+      color: white;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    button:hover {
+      background: #2563eb;
+    }
+
+    select {
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
+
+    table {
+      margin: auto;
+      border-collapse: collapse;
+      width: 90%;
+      background: #f9f9f9;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    th, td {
+      padding: 12px;
+      border-bottom: 1px solid #ddd;
+    }
+
+    th {
+      background: #e5e5e5;
+    }
+
+    tr:hover {
+      background: #dbeafe;
+    }
+  </style>
+</head>
+
+<body>
+
+<h1>Registro Biblioteca Pública de Ibros</h1>
+
+<div class="busqueda">
+  <input type="text" id="buscador" placeholder="Buscar libro...">
+  <button onclick="buscar()">🔍</button>
+
+  <select id="filtroAutor" onchange="buscar()">
+    <option value="">Todos los autores</option>
+  </select>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th>Título</th>
+      <th>Autor</th>
+      <th>Código</th>
+    </tr>
+  </thead>
+  <tbody id="tabla"></tbody>
+</table>
+
+<script>
+const API_URL = "https://script.google.com/macros/s/AKfycbwj7XOztoSAC1O25yGYO_k017fHYnZ95XOAdbnPpTi3XR8Zvjvt1wIgvb1jRPZ1_EUlkQ/exec";
+
+let libros = [];
+
+// 🔥 CARGAR DATOS Y CORREGIR CAMPOS
+fetch(API_URL)
+  .then(res => res.json())
+  .then(data => {
+
+    // Convertimos los datos a texto (String) para evitar errores con números
+    libros = data.map(libro => ({
+      titulo: String(libro.autor || ""),
+      autor: String(libro.codigo || ""),
+      codigo: String(libro.titulo || "")
+    }));
+
+    mostrar(libros);
+    cargarAutores();
+  })
+  .catch(error => console.error("Error:", error));
+
+// 📊 MOSTRAR TABLA
+function mostrar(lista) {
+  const tabla = document.getElementById("tabla");
+  tabla.innerHTML = "";
+
+  if (lista.length === 0) {
+    tabla.innerHTML = "<tr><td colspan='3'>No hay resultados</td></tr>";
+    return;
+  }
+
+  lista.forEach(libro => {
+    tabla.innerHTML += `
+      <tr>
+        <td>${libro.titulo}</td>
+        <td>${libro.autor}</td>
+        <td>${libro.codigo}</td>
+      </tr>
+    `;
+  });
+}
+
+// 🔍 BUSCAR + FILTRAR
+function buscar() {
+  const texto = document.getElementById("buscador").value.toLowerCase().trim();
+  const autorSeleccionado = document.getElementById("filtroAutor").value;
+
+  const filtrados = libros.filter(libro => {
+    // Forzamos que sean texto antes de pasarlos a minúsculas
+    const titulo = String(libro.titulo).toLowerCase();
+    const autor = String(libro.autor).toLowerCase();
+    const codigo = String(libro.codigo).toLowerCase();
+
+    const coincideTexto =
+      titulo.includes(texto) ||
+      autor.includes(texto) ||
+      codigo.includes(texto);
+
+    const coincideAutor =
+      autorSeleccionado === "" ||
+      libro.autor === autorSeleccionado;
+
+    return coincideTexto && coincideAutor;
+  });
+
+  mostrar(filtrados);
+}
+
+// ⌨️ ENTER
+document.getElementById("buscador").addEventListener("keypress", function(e) {
+  if (e.key === "Enter") buscar();
+});
+
+// 👤 CARGAR AUTORES
+function cargarAutores() {
+  const select = document.getElementById("filtroAutor");
+  
+  // Limpiamos las opciones previas
+  select.innerHTML = '<option value="">Todos los autores</option>';
+
+  const autoresUnicos = [...new Set(libros.map(l => l.autor))].filter(a => a !== "").sort();
+
+  autoresUnicos.forEach(autor => {
+    const option = document.createElement("option");
+    option.value = autor;
+    option.textContent = autor;
+    select.appendChild(option);
+  });
+}
+</script>
+
+</body>
+</html>
