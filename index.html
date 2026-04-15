@@ -2,35 +2,54 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Registro Biblioteca Pública de Ibros</title>
+
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#3b82f6">
 
   <style>
     body {
-      font-family: Arial;
+      font-family: Arial, sans-serif;
       background: #ffffff;
       color: #111;
       text-align: center;
       margin: 0;
-      padding: 20px;
+      padding: 10px; /* Reducido para móviles */
     }
 
     h1 {
-      margin-bottom: 20px;
+      margin: 20px 0;
+      font-size: 1.5rem;
     }
 
     .busqueda {
       display: flex;
-      justify-content: center;
+      flex-direction: column; /* Apilado en móviles para mejor acceso */
+      align-items: center;
       gap: 10px;
       margin-bottom: 20px;
     }
 
+    @media (min-width: 600px) {
+      .busqueda {
+        flex-direction: row;
+        justify-content: center;
+      }
+    }
+
     input {
       padding: 12px;
-      width: 250px;
+      width: 90%;
+      max-width: 300px;
       font-size: 16px;
       border-radius: 8px;
       border: 1px solid #ccc;
+    }
+
+    .controles-extra {
+      display: flex;
+      gap: 10px;
     }
 
     button {
@@ -51,20 +70,29 @@
       padding: 12px;
       border-radius: 8px;
       border: 1px solid #ccc;
+      font-size: 16px;
+      max-width: 200px;
+    }
+
+    .table-container {
+      overflow-x: auto; /* Permite scroll lateral en tablas muy anchas en móviles */
+      margin-top: 10px;
     }
 
     table {
       margin: auto;
       border-collapse: collapse;
-      width: 90%;
+      width: 100%;
+      max-width: 900px;
       background: #f9f9f9;
       border-radius: 10px;
       overflow: hidden;
     }
 
     th, td {
-      padding: 12px;
+      padding: 12px 8px;
       border-bottom: 1px solid #ddd;
+      font-size: 14px;
     }
 
     th {
@@ -75,43 +103,58 @@
       background: #dbeafe;
     }
   </style>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js')
+          .then(reg => console.log('Service Worker registrado con éxito'))
+          .catch(err => console.log('Error al registrar el Service Worker', err));
+      });
+    }
+  </script>
 </head>
 
 <body>
 
-<h1>Registro Biblioteca Pública de Ibros</h1>
+<h1>Biblioteca Pública de Ibros</h1>
 
 <div class="busqueda">
-  <input type="text" id="buscador" placeholder="Buscar libro...">
-  <button onclick="buscar()">🔍</button>
-
-  <select id="filtroAutor" onchange="buscar()">
-    <option value="">Todos los autores</option>
-  </select>
+  <input type="text" id="buscador" placeholder="Buscar libro, autor o código...">
+  
+  <div class="controles-extra">
+    <button onclick="buscar()">🔍</button>
+    <select id="filtroAutor" onchange="buscar()">
+      <option value="">Todos los autores</option>
+    </select>
+  </div>
 </div>
 
-<table>
-  <thead>
-    <tr>
-      <th>Título</th>
-      <th>Autor</th>
-      <th>Código</th>
-    </tr>
-  </thead>
-  <tbody id="tabla"></tbody>
-</table>
+<div class="table-container">
+  <table>
+    <thead>
+      <tr>
+        <th>Título</th>
+        <th>Autor</th>
+        <th>Código</th>
+      </tr>
+    </thead>
+    <tbody id="tabla">
+      <tr><td colspan="3">Cargando biblioteca...</td></tr>
+    </tbody>
+  </table>
+</div>
 
 <script>
 const API_URL = "https://script.google.com/macros/s/AKfycbwj7XOztoSAC1O25yGYO_k017fHYnZ95XOAdbnPpTi3XR8Zvjvt1wIgvb1jRPZ1_EUlkQ/exec";
 
 let libros = [];
 
-// 🔥 CARGAR DATOS Y CORREGIR CAMPOS
+// CARGAR DATOS
 fetch(API_URL)
   .then(res => res.json())
   .then(data => {
-
-    // Convertimos los datos a texto (String) para evitar errores con números
+    // Mapeo de datos para asegurar que coincidan con las columnas
     libros = data.map(libro => ({
       titulo: String(libro.autor || ""),
       autor: String(libro.codigo || ""),
@@ -121,9 +164,12 @@ fetch(API_URL)
     mostrar(libros);
     cargarAutores();
   })
-  .catch(error => console.error("Error:", error));
+  .catch(error => {
+    console.error("Error:", error);
+    document.getElementById("tabla").innerHTML = "<tr><td colspan='3'>Error al cargar los datos</td></tr>";
+  });
 
-// 📊 MOSTRAR TABLA
+// MOSTRAR TABLA
 function mostrar(lista) {
   const tabla = document.getElementById("tabla");
   tabla.innerHTML = "";
@@ -134,23 +180,22 @@ function mostrar(lista) {
   }
 
   lista.forEach(libro => {
-    tabla.innerHTML += `
-      <tr>
-        <td>${libro.titulo}</td>
-        <td>${libro.autor}</td>
-        <td>${libro.codigo}</td>
-      </tr>
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td>${libro.titulo}</td>
+      <td>${libro.autor}</td>
+      <td>${libro.codigo}</td>
     `;
+    tabla.appendChild(row);
   });
 }
 
-// 🔍 BUSCAR + FILTRAR
+// BUSCAR + FILTRAR
 function buscar() {
   const texto = document.getElementById("buscador").value.toLowerCase().trim();
   const autorSeleccionado = document.getElementById("filtroAutor").value;
 
   const filtrados = libros.filter(libro => {
-    // Forzamos que sean texto antes de pasarlos a minúsculas
     const titulo = String(libro.titulo).toLowerCase();
     const autor = String(libro.autor).toLowerCase();
     const codigo = String(libro.codigo).toLowerCase();
@@ -170,19 +215,19 @@ function buscar() {
   mostrar(filtrados);
 }
 
-// ⌨️ ENTER
+// SOPORTE PARA TECLA ENTER
 document.getElementById("buscador").addEventListener("keypress", function(e) {
   if (e.key === "Enter") buscar();
 });
 
-// 👤 CARGAR AUTORES
+// CARGAR SELECT DE AUTORES
 function cargarAutores() {
   const select = document.getElementById("filtroAutor");
-  
-  // Limpiamos las opciones previas
   select.innerHTML = '<option value="">Todos los autores</option>';
 
-  const autoresUnicos = [...new Set(libros.map(l => l.autor))].filter(a => a !== "").sort();
+  const autoresUnicos = [...new Set(libros.map(l => l.autor))]
+    .filter(a => a && a.trim() !== "")
+    .sort();
 
   autoresUnicos.forEach(autor => {
     const option = document.createElement("option");
