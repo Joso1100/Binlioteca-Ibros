@@ -1,241 +1,259 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Registro Biblioteca Pública de Ibros</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Registro Biblioteca Pública de Ibros</title>
 
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#3b82f6">
+<style>
+:root {
+    --bg: #ffffff;
+    --text: #222;
+    --border: #ddd;
+    --input-bg: #f5f5f5;
+    --sidebar: #f0f0f0;
+}
 
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #ffffff;
-      color: #111;
-      text-align: center;
-      margin: 0;
-      padding: 10px; /* Reducido para móviles */
-    }
+[data-theme="dark"] {
+    --bg: #1a1a1a;
+    --text: #eee;
+    --border: #444;
+    --input-bg: #2a2a2a;
+    --sidebar: #2d2d2d;
+}
 
-    h1 {
-      margin: 20px 0;
-      font-size: 1.5rem;
-    }
+body {
+    margin:0;
+    font-family: Arial;
+    background: var(--bg);
+    color: var(--text);
+    display:flex;
+}
 
-    .busqueda {
-      display: flex;
-      flex-direction: column; /* Apilado en móviles para mejor acceso */
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 20px;
-    }
+/* SIDEBAR */
+.sidebar {
+    width:200px;
+    height:100vh;
+    background:var(--sidebar);
+    position:fixed;
+    padding:20px;
+    box-sizing:border-box;
+}
 
-    @media (min-width: 600px) {
-      .busqueda {
-        flex-direction: row;
-        justify-content: center;
-      }
-    }
+.sidebar a {
+    display:block;
+    margin-bottom:15px;
+    text-decoration:none;
+    color:var(--text);
+    font-weight:bold;
+}
 
-    input {
-      padding: 12px;
-      width: 90%;
-      max-width: 300px;
-      font-size: 16px;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-    }
+/* CONTENIDO */
+.main {
+    margin-left:200px;
+    width:100%;
+    text-align:center;
+}
 
-    .controles-extra {
-      display: flex;
-      gap: 10px;
-    }
+/* TITULO */
+h1 {
+    margin-top:30px;
+}
 
-    button {
-      padding: 12px 16px;
-      border: none;
-      background: #3b82f6;
-      color: white;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 16px;
-    }
+/* CONTROLES */
+.toolbar {
+    display:flex;
+    gap:15px;
+    justify-content:center;
+    margin:30px;
+}
 
-    button:hover {
-      background: #2563eb;
-    }
+/* BUSCADOR */
+.search-box {
+    display:flex;
+    align-items:center;
+    background: var(--input-bg);
+    border-radius:30px;
+    padding:10px 15px;
+    width:320px;
+    border:1px solid var(--border);
+}
 
-    select {
-      padding: 12px;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-      font-size: 16px;
-      max-width: 200px;
-    }
+.search-box span {
+    margin-right:10px;
+}
 
-    .table-container {
-      overflow-x: auto; /* Permite scroll lateral en tablas muy anchas en móviles */
-      margin-top: 10px;
-    }
+.search-box input {
+    border:none;
+    outline:none;
+    background:transparent;
+    width:100%;
+    font-size:16px;
+    color:var(--text);
+}
 
-    table {
-      margin: auto;
-      border-collapse: collapse;
-      width: 100%;
-      max-width: 900px;
-      background: #f9f9f9;
-      border-radius: 10px;
-      overflow: hidden;
-    }
+/* SELECT - CORREGIDO PARA MODO OSCURO */
+select {
+    border-radius:30px;
+    padding:10px 20px;
+    border:1px solid var(--border);
+    background: var(--input-bg);
+    color: var(--text); /* Asegura que el texto use la variable de color */
+    font-size:16px;
+    outline: none;
+    cursor: pointer;
+}
 
-    th, td {
-      padding: 12px 8px;
-      border-bottom: 1px solid #ddd;
-      font-size: 14px;
-    }
+/* Estilo específico para las opciones dentro del select */
+select option {
+    background: var(--input-bg);
+    color: var(--text);
+}
 
-    th {
-      background: #e5e5e5;
-    }
+/* TABLA */
+table {
+    width:90%;
+    margin:auto;
+    border-collapse:collapse;
+}
 
-    tr:hover {
-      background: #dbeafe;
-    }
-  </style>
+th, td {
+    padding:12px;
+    border-bottom:1px solid var(--border);
+    text-align:center;
+}
 
-  <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('sw.js')
-          .then(reg => console.log('Service Worker registrado con éxito'))
-          .catch(err => console.log('Error al registrar el Service Worker', err));
-      });
-    }
-  </script>
+/* BOTON MODO OSCURO */
+#theme-toggle {
+    position:fixed;
+    top:20px;
+    right:20px;
+    padding:10px 15px;
+    border-radius:20px;
+    border:1px solid var(--border);
+    background:var(--input-bg);
+    color: var(--text);
+    cursor:pointer;
+}
+</style>
 </head>
 
 <body>
 
-<h1>Biblioteca Pública de Ibros</h1>
-
-<div class="busqueda">
-  <input type="text" id="buscador" placeholder="Buscar libro, autor o código...">
-  
-  <div class="controles-extra">
-    <button onclick="buscar()">🔍</button>
-    <select id="filtroAutor" onchange="buscar()">
-      <option value="">Todos los autores</option>
-    </select>
-  </div>
+<div class="sidebar">
+    <div class="header">
+    <img src="file:///C:/Users/dinamizador/Desktop/640px-Escudo_de_Ibros_(Ja%C3%A9n).svg.png" 
+     alt="Escudo" 
+     style="width: 150px; height: auto; display: block; margin: 0 auto 20px;">
+</div>
+    <h3>_</h3>
+    <a href="#">Sugerencias</a>
+    <a href="#">Acerca de</a>
 </div>
 
-<div class="table-container">
-  <table>
-    <thead>
-      <tr>
-        <th>Título</th>
-        <th>Autor</th>
-        <th>Código</th>
-      </tr>
-    </thead>
-    <tbody id="tabla">
-      <tr><td colspan="3">Cargando biblioteca...</td></tr>
-    </tbody>
-  </table>
+<button id="theme-toggle">Modo oscuro</button>
+
+<div class="main">
+
+<br><br><h1>Registro Biblioteca Pública de Ibros</h1>
+
+<br><div class="toolbar">
+
+    <div class="search-box">
+        <span></span>
+        <input type="text" id="searchInput" placeholder="Buscar libro...">
+    </div>
+
+    <select id="estanterias"></select>
+
+</div>
+<br><br>
+
+<table>
+<thead>
+<tr>
+<th>Título</th>
+<th>Autor</th>
+<th>Código</th>
+</tr>
+</thead>
+<tbody id="cuerpoTabla"></tbody>
+</table>
+
+<div id="loader" style="display:none;">Cargando...</div>
+
 </div>
 
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbwj7XOztoSAC1O25yGYO_k017fHYnZ95XOAdbnPpTi3XR8Zvjvt1wIgvb1jRPZ1_EUlkQ/exec";
+const API_URL = 'https://script.google.com/macros/s/AKfycbyBLvG-_RfWct0oych5RoIeQAlK-LpC-Xprp9SM4auL2kwMj81vXLpfg7cEsPKDWaOK/exec';
 
-let libros = [];
+const select = document.getElementById('estanterias');
+const tabla = document.getElementById('cuerpoTabla');
+const loader = document.getElementById('loader');
+const themeBtn = document.getElementById('theme-toggle');
 
-// CARGAR DATOS
-fetch(API_URL)
-  .then(res => res.json())
-  .then(data => {
-    // Mapeo de datos para asegurar que coincidan con las columnas
-    libros = data.map(libro => ({
-      titulo: String(libro.autor || ""),
-      autor: String(libro.codigo || ""),
-      codigo: String(libro.titulo || "")
-    }));
+/* MODO OSCURO */
+themeBtn.onclick = () => {
+    const actual = document.documentElement.getAttribute('data-theme');
+    const nuevo = actual === 'dark' ? 'light' : 'dark';
 
-    mostrar(libros);
-    cargarAutores();
-  })
-  .catch(error => {
-    console.error("Error:", error);
-    document.getElementById("tabla").innerHTML = "<tr><td colspan='3'>Error al cargar los datos</td></tr>";
-  });
+    document.documentElement.setAttribute('data-theme', nuevo);
+    themeBtn.textContent = nuevo === 'dark' ? 'Modo claro' : 'Modo oscuro';
+};
 
-// MOSTRAR TABLA
-function mostrar(lista) {
-  const tabla = document.getElementById("tabla");
-  tabla.innerHTML = "";
+/* CARGAR DATOS */
+async function cargarDatos(shelf){
+    tabla.innerHTML='';
+    loader.style.display='block';
 
-  if (lista.length === 0) {
-    tabla.innerHTML = "<tr><td colspan='3'>No hay resultados</td></tr>";
-    return;
-  }
+    try{
+        const res = await fetch(`${API_URL}?estanteria=${encodeURIComponent(shelf)}`);
+        const libros = await res.json();
+        loader.style.display='none';
 
-  lista.forEach(libro => {
-    const row = document.createElement("tr");
-    row.innerHTML = `
-      <td>${libro.titulo}</td>
-      <td>${libro.autor}</td>
-      <td>${libro.codigo}</td>
-    `;
-    tabla.appendChild(row);
-  });
+        libros.forEach(libro=>{
+            if(!libro.titulo || libro.titulo.toLowerCase().includes("título") || libro.titulo.toLowerCase().includes("estanter")) return;
+
+            tabla.innerHTML += `
+                <tr>
+                    <td>${libro.titulo}</td>
+                    <td>${libro.autor || ''}</td>
+                    <td>${libro.id || ''}</td>
+                </tr>`;
+        });
+
+    }catch(e){
+        loader.style.display='none';
+    }
 }
 
-// BUSCAR + FILTRAR
-function buscar() {
-  const texto = document.getElementById("buscador").value.toLowerCase().trim();
-  const autorSeleccionado = document.getElementById("filtroAutor").value;
+/* INIT */
+async function inicializar(){
+    const res = await fetch(`${API_URL}?action=getEstanterias`);
+    const lista = await res.json();
 
-  const filtrados = libros.filter(libro => {
-    const titulo = String(libro.titulo).toLowerCase();
-    const autor = String(libro.autor).toLowerCase();
-    const codigo = String(libro.codigo).toLowerCase();
+    lista.forEach(nombre=>{
+        const opt=document.createElement('option');
+        opt.value=nombre;
+        opt.textContent=nombre;
+        if(nombre==="Estantería 1") opt.selected=true;
+        select.appendChild(opt);
+    });
 
-    const coincideTexto =
-      titulo.includes(texto) ||
-      autor.includes(texto) ||
-      codigo.includes(texto);
-
-    const coincideAutor =
-      autorSeleccionado === "" ||
-      libro.autor === autorSeleccionado;
-
-    return coincideTexto && coincideAutor;
-  });
-
-  mostrar(filtrados);
+    select.dispatchEvent(new Event('change'));
 }
 
-// SOPORTE PARA TECLA ENTER
-document.getElementById("buscador").addEventListener("keypress", function(e) {
-  if (e.key === "Enter") buscar();
+select.addEventListener('change', e=>cargarDatos(e.target.value));
+
+/* BUSCADOR */
+document.getElementById('searchInput').addEventListener('keyup', function(){
+    const b=this.value.toLowerCase();
+    Array.from(tabla.getElementsByTagName('tr')).forEach(f=>{
+        f.style.display = f.innerText.toLowerCase().includes(b) ? '' : 'none';
+    });
 });
 
-// CARGAR SELECT DE AUTORES
-function cargarAutores() {
-  const select = document.getElementById("filtroAutor");
-  select.innerHTML = '<option value="">Todos los autores</option>';
-
-  const autoresUnicos = [...new Set(libros.map(l => l.autor))]
-    .filter(a => a && a.trim() !== "")
-    .sort();
-
-  autoresUnicos.forEach(autor => {
-    const option = document.createElement("option");
-    option.value = autor;
-    option.textContent = autor;
-    select.appendChild(option);
-  });
-}
+inicializar();
 </script>
 
 </body>
